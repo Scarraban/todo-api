@@ -36,13 +36,26 @@ app.post('/todos', function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
 
 	if(!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
-		return res.status(400).send('Data provided was not valid!');
+		return res.status(400).json({"error": "Data provided was not valid!"});
 	}
 
 	body.id = todoNextId++;
 	body.description = body.description.trim();
 	todos.push(body);
 	res.json(body);
+});
+
+// DELETE /todos/:id
+app.delete('/todos/:id', function(req, res) {
+	var todoID = parseInt(req.params.id);
+	var todoOutput = _.findWhere(todos, { id: todoID });
+
+	if(todoOutput) {
+		todos = _.without(todos, todoOutput);
+		res.json(todoOutput);
+	} else {
+		res.status(404).json({"error": "No todo with ID " + todoID});
+	}
 });
 
 app.listen(PORT, function() {
