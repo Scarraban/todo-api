@@ -32,7 +32,7 @@ app.get('/todos', function(req, res) {
 
   if(query.hasOwnProperty('q') && query.q.length > 0) {
     filteredTodos = _.filter(filteredTodos, function(todo) { 
-      return todo.description.indexOf(query.q) > -1; 
+      return todo.description.toLowerCase().indexOf(query.q.toLowerCase) > -1; 
     });
   }
 
