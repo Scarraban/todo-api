@@ -78,21 +78,21 @@ app.post('/todos', function(req, res) {
 app.delete('/todos/:id', function(req, res) {
   var todoID = parseInt(req.params.id);
 
-      db.todo.destroy({
-        where: {
-          id: todoID
-        }
-      }).then(function(rowsDeleted) {
-        if(rowsDeleted === 0) {
-          res.status(400).json({
-            error: 'No todo with ID: ' + todoID
-          });
-        } else {
-          res.status(204).send();
-        }
-      }, function(e) {
-        res.status(500).send();
+  db.todo.destroy({
+    where: {
+      id: todoID
+    }
+  }).then(function(rowsDeleted) {
+    if (rowsDeleted === 0) {
+      res.status(400).json({
+        error: 'No todo with ID: ' + todoID
       });
+    } else {
+      res.status(204).send();
+    }
+  }, function(e) {
+    res.status(500).send();
+  });
 
 });
 
@@ -100,36 +100,29 @@ app.delete('/todos/:id', function(req, res) {
 app.put('/todos/:id', function(req, res) {
   var todoID = parseInt(req.params.id);
   var body = _.pick(req.body, 'description', 'completed');
-  var todoOutput = _.findWhere(todos, {
-    id: todoID
+  var attributes = {};
+
+  if (body.hasOwnProperty('completed')) {
+    attributes.completed = body.completed;
+  }
+
+  if (body.hasOwnProperty('description') && typeof body.description != 'boolean') {
+    attributes.description = body.description;
+  }
+
+  db.todo.findById(todoID).then(function(todo) {
+    if (todo) {
+      todo.update(attributes).then(function(todo) {
+        res.json(todo.toJSON());
+      }, function(e) {
+        res.status(400).json(e);
+      });
+    } else {
+      res.status(404).send();
+    }
+  }, function(e) {
+    res.status(500).send();
   });
-
-  if (!todoOutput) {
-    return res.status(404).json({
-      "error": "No todo with ID " + todoID
-    });
-  }
-
-  var validAttributes = {};
-
-  if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-    validAttributes.completed = body.completed;
-  } else if (body.hasOwnProperty('completed')) {
-    return res.status(400).json({
-      "error": "The data provided was not valid!"
-    })
-  }
-
-  if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
-    validAttributes.description = body.description;
-  } else if (body.hasOwnProperty('description')) {
-    return res.status(400).json({
-      "error": "The data provided was not valid!"
-    });
-  }
-
-  _.extend(todoOutput, validAttributes);
-  res.json(todoOutput);
 });
 
 db.sequelize.sync().then(function() {
