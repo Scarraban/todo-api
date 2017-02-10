@@ -18,37 +18,36 @@ app.get('/', function(req, res) {
 // GET/todos?completed={boolean}&q={string}
 app.get('/todos', function(req, res) {
   var query = req.query;
-  var filteredTodos = todos;
+  // var filteredTodos = todos;
 
-  if (query.hasOwnProperty('completed') && query.completed.length > 0) {
-    switch (query.completed) {
-      case 'true':
-        filteredTodos = _.where(todos, {
-          completed: true
-        });
-        break;
-      case 'false':
-        filteredTodos = _.where(todos, {
-          completed: false
-        });
-        break;
-    }
+  var where = {};
+
+  if (query.hasOwnProperty('completed') && query.completed == 'true') {
+    where.completed = true;
+  } else if (query.hasOwnProperty('completed') && query.completed == 'false') {
+    where.completed = false;
   }
-
   if (query.hasOwnProperty('q') && query.q.length > 0) {
-    filteredTodos = _.filter(filteredTodos, function(todo) {
-      return todo.description.toLowerCase().indexOf(query.q.toLowerCase) > -1;
-    });
+    where.description = {
+      $like: '%' + query.q + '%'
+    };
   }
 
-  res.json(filteredTodos);
+  db.todo.findAll({
+    where: where
+  }).then(function(todos) {
+    res.json(todos);
+  }, function(e) {
+    res.status(500).send();
+  });
+
 });
 
 // GET /todos/:id
 app.get('/todos/:id', function(req, res) {
 
   db.todo.findById(req.params.id).then(function(todo) {
-    if(todo) {
+    if (todo) {
       res.json(todo.toJSON());
     } else {
       res.status(404).json({
@@ -59,16 +58,6 @@ app.get('/todos/:id', function(req, res) {
     res.status(500).send();
   });
 
-  // var todoID = parseInt(req.params.id);
-  // var todoOutput = _.findWhere(todos, {
-  //   id: todoID
-  // });
-
-  // if (todoOutput) {
-  //   res.json(todoOutput);
-  // } else {
-  //   res.status(404).send('No todo with ID ' + todoID + '!');
-  // }
 });
 
 // POST /todos
@@ -83,16 +72,6 @@ app.post('/todos', function(req, res) {
     res.status(400).json(e);
   });
 
-  // if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
-  //   return res.status(400).json({
-  //     "error": "Data provided was not valid!"
-  //   });
-  // }
-
-  // body.id = todoNextId++;
-  // body.description = body.description.trim();
-  // todos.push(body);
-  // res.json(body);
 });
 
 // DELETE /todos/:id
