@@ -46,16 +46,29 @@ app.get('/todos', function(req, res) {
 
 // GET /todos/:id
 app.get('/todos/:id', function(req, res) {
-  var todoID = parseInt(req.params.id);
-  var todoOutput = _.findWhere(todos, {
-    id: todoID
+
+  db.todo.findById(req.params.id).then(function(todo) {
+    if(todo) {
+      res.json(todo.toJSON());
+    } else {
+      res.status(404).json({
+        "error": "Requested todo with ID " + req.params.id + " not found!"
+      });
+    }
+  }, function(e) {
+    res.status(500).send();
   });
 
-  if (todoOutput) {
-    res.json(todoOutput);
-  } else {
-    res.status(404).send('No todo with ID ' + todoID + '!');
-  }
+  // var todoID = parseInt(req.params.id);
+  // var todoOutput = _.findWhere(todos, {
+  //   id: todoID
+  // });
+
+  // if (todoOutput) {
+  //   res.json(todoOutput);
+  // } else {
+  //   res.status(404).send('No todo with ID ' + todoID + '!');
+  // }
 });
 
 // POST /todos
